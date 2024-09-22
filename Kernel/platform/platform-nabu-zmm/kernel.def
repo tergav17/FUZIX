@@ -1,107 +1,49 @@
-; FUZIX mnemonics for memory addresses etc
-
-U_DATA__TOTALSIZE	.equ	0x200	; 256+256 bytes @ D000
-Z80_TYPE		.equ	2	; Z80 or Z180
-USE_FANCY_MONITOR	.equ	1	; disabling this saves around approx 0.5KB
-
-Z80_MMU_HOOKS		.equ 0
-
-CONFIG_SWAP		.equ 1
-
-PROGBASE		.equ	0x0000
-PROGLOAD		.equ	0x0100
-
-; Z180 properties
-Z180_IO_BASE		.equ 0xC0
-CPU_CLOCK_KHZ           .equ 18432        ; 18.432MHz * 1
-Z180_TIMER_SCALE        .equ 20           ; CPU clocks per timer tick
-TICKSPERSEC             .equ 40           ; timer interrupt rate (Hz)
-
-; Mnemonics for I/O ports etc
-
-CONSOLE_RATE		.equ	115200
-
-; VFD Debugging (clashes with Joystick port)
-VFD_C   .EQU    0     ; control register
-VFD_D   .EQU    1     ; data register
-
-; Z80 CTC ports
-CTC_CH0		.equ	0x88	; CTC channel 0
-CTC_CH1		.equ	0x89	; CTC channel 1 (SIO B)
-CTC_CH2		.equ	0x8A	; CTC channel 2 (chained to 3 for interval)
-CTC_CH3		.equ	0x8B	; CTC channel 3 (interval ticks)
-
-; 37C65 FDC ports
+;	FUZIX mnemonics for memory addresses etc
 ;
-; These depend upon the card
 ;
-; Classic 'all over the I/O space' layout
+;	The U_DATA address. If we are doing a normal build this is the start
+;	of common memory. We do actually have a symbol for udata so
+;	eventually this needs to go away
 ;
-;FDC_CCR		.equ	0x48	; Configuration Control Register (W/O)
-;FDC_MSR		.equ	0x50	; 37C65 Main Status Register (R/O)
-;FDC_DATA	.equ	0x51	; 37C65 Data Port (R/W)
-;FDC_DOR		.equ	0x58	; Digital Output Register (W/O)
-;FDC_TC		.equ	0x58	; Pulse terminal count (R/O)
+U_DATA__TOTALSIZE           .equ 0x200        ; 256+256 bytes @ F000
 ;
-; Tight decode cards
+;	Space for the udata of a switched out process within the bank of
+;	memory that it uses. Normally placed at the very top
 ;
-FDC_MSR		.equ	0x48
-FDC_DATA	.equ	0x49
-FDC_DOR		.equ	0x4A
-FDC_CCR		.equ	0x4B
-FDC_TC		.equ	0x4C
-FDC_RESET	.equ	0x4D
-
-
-; MMU Ports
-MPGSEL_0	.equ	0x78	; Bank_0 page select register (W/O)
-MPGSEL_1	.equ	0x79	; Bank_1 page select register (W/O)
-MPGSEL_2	.equ	0x7A	; Bank_2 page select register (W/O)
-MPGSEL_3	.equ	0x7B	; Bank_3 page select register (W/O)
-MPGENA		.equ	0x7C	; memory paging enable register, bit 0 (W/O)
-
-NBUFS		.equ	5
-
-
-DMAPORT		.equ	0x04	; Z80DMA
-
-
+U_DATA_STASH		    .equ 0x7E00	      ; 7E00-7FFF
 ;
-;	SPI uses the top bit
+;	Z80 systems start program space at 0, and load at 0x100 so that the
+;	low 256 bytes are free for syscall vectors and the like, with some
+;	also used as a special case by the CP/M emulator.
+;
+PROGBASE		    .equ 0x0000
+PROGLOAD		    .equ 0x0100
+;
+;	CPU type
+;	0 = CMOS Z80
+;	1 = NMOS Z80 (also works with CMOS)
+;	2 = Z180
+;
+;	If either NMOS or CMOS may be present pick NMOS as the NMOS build
+;	contains extra code to work around an erratum n the NUMS Z80
+;
+Z80_TYPE		    .equ 1	      ; NMOS (IRQ bugs) Z80
+;
+;	For special platforms that have external memory protection hardware
+;	Just say 0.
+;
+Z80_MMU_HOOKS		    .equ 0
+;
+;	Set this if the platform has swap enabled in config.h
+;
+#define CONFIG_SWAP
+;
+;	The number of disk buffers. Must match config.h
+;
+NBUFS			    .equ 5
+;
+;	Configuration for the Zeta floppy controller. Specific to that
+;	driver rather than generic.
 ;
 
-.macro	ROTATE
-	rla
-.endm
-
-.macro LOADFIRST
-	in d,(c)
-	rlc d
-.endm
-
-;
-;	NCR 5380 SCSI
-;
-B_RST	.equ	0x80
-B_AACK	.equ	0x10
-B_ASEL	.equ	0x04
-B_ABUS	.equ	0x01
-
-B_BUSY	.equ	0x40
-B_MSG	.equ	0x10
-B_CD	.equ	0x08
-B_IO	.equ	0x04
-
-B_PHAS	.equ	0x08
-
-ncr_base	.equ	0x58
-ncr_data	.equ	ncr_base
-ncr_cmd		.equ	ncr_base + 1
-ncr_mod		.equ	ncr_base + 2
-ncr_tgt		.equ	ncr_base + 3
-ncr_bus		.equ	ncr_base + 4
-ncr_st		.equ	ncr_base + 5
-ncr_dma_w	.equ	ncr_base + 5
-ncr_int		.equ	ncr_base + 7
-ncr_dma_r	.equ	ncr_base + 7
-ncr_dack	.equ	ncr_base + 8
+CPU_CLOCK_KHZ	.equ	3570	; 8MHz is usual top
