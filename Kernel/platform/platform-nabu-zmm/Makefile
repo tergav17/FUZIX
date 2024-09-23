@@ -58,7 +58,7 @@ clean:
 #
 #	Attach the kernel to the boot block
 #
-image:	bootblock
+image:
 	$(CROSS_LD) -b -C 0x0100 -S 0xF400 -f CLDBbXSs -o fuzix.bin \
 	crt0.o commonmem.o sbcv2.o ../../start.o \
 	../../version.o ../../cpu-z80u/lowlevel-z80u.o \
